@@ -1,0 +1,149 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jump Game</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background-color: #c8f0ff;
+    overflow: hidden;
+    font-family: sans-serif;
+  }
+  canvas {
+    background-color: #87ceeb;
+    display: block;
+    margin: 0 auto;
+    border-bottom: 4px solid #333;
+  }
+  #score {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 22px;
+    color: #222;
+    font-weight: bold;
+  }
+  #gameOver {
+    display: none;
+    text-align: center;
+    font-size: 36px;
+    color: red;
+    margin-top: 20px;
+  }
+  #restartBtn {
+    display: none;
+    margin: 10px auto;
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #222;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas" width="600" height="200"></canvas>
+<div id="gameOver">Game Over!</div>
+<button id="restartBtn" onclick="restartGame()">Restart</button>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const scoreEl = document.getElementById("score");
+const gameOverEl = document.getElementById("gameOver");
+const restartBtn = document.getElementById("restartBtn");
+
+let player = { x: 50, y: 150, width: 30, height: 30, velocityY: 0, jumpPower: -9, gravity: 0.5 };
+let obstacles = [];
+let score = 0;
+let gameOver = false;
+
+function spawnObstacle() {
+  const obstacle = { x: 600, y: 170, width: 20, height: 30 };
+  obstacles.push(obstacle);
+}
+let obstacleTimer = 0;
+
+function update() {
+  if (gameOver) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Player physics
+  player.y += player.velocityY;
+  player.velocityY += player.gravity;
+  if (player.y > 150) player.y = 150;
+
+  // Draw player
+  ctx.fillStyle = "#ff5733";
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+
+  // Obstacles
+  obstacleTimer++;
+  if (obstacleTimer > 90) {
+    spawnObstacle();
+    obstacleTimer = 0;
+  }
+
+  for (let i = 0; i < obstacles.length; i++) {
+    const o = obstacles[i];
+    o.x -= 5;
+    ctx.fillStyle = "#333";
+    ctx.fillRect(o.x, o.y, o.width, o.height);
+
+    // collision
+    if (
+      player.x < o.x + o.width &&
+      player.x + player.width > o.x &&
+      player.y < o.y + o.height &&
+      player.y + player.height > o.y
+    ) {
+      endGame();
+    }
+  }
+
+  obstacles = obstacles.filter(o => o.x > -20);
+
+  // Score
+  score++;
+  scoreEl.textContent = "Score: " + score;
+
+  requestAnimationFrame(update);
+}
+
+function jump() {
+  if (player.y === 150) {
+    player.velocityY = player.jumpPower;
+  }
+}
+
+function endGame() {
+  gameOver = true;
+  gameOverEl.style.display = "block";
+  restartBtn.style.display = "block";
+}
+
+function restartGame() {
+  gameOver = false;
+  obstacles = [];
+  score = 0;
+  player.y = 150;
+  player.velocityY = 0;
+  gameOverEl.style.display = "none";
+  restartBtn.style.display = "none";
+  update();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") jump();
+});
+
+update();
+</script>
+</body>
+</html>
